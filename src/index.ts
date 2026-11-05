@@ -1,20 +1,23 @@
 import { Hono } from 'hono'
+import { PrismaClient } from './generated/prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-const app = new Hono()
+const app = new Hono<{ Bindings: { DATABASE_URL: string } }>()
+
+app.post('/api/v1/signup', async (c) => {
+  const { email, password } = await c.req.json()
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: c.env.DATABASE_URL }),
+  })
+  await prisma.user.create({ data: { email, password } })
+  return c.json({ message: 'User signed up successfully!' })
+})
 
 
-
-app.post("/api/v1/signup", async (c) => {
-  const body = await c.req.json()
-  const { email, password } = body
   
   // Here you would typically handle the signup logic, such as saving the user to a database
   // For demonstration purposes, we'll just return the received data
-  return c.json({
-    message: 'User signed up successfully!',
-  })
-})
-
+  
 
 app.post("/api/v1/login", async (c) => {
   const body = await c.req.json()
